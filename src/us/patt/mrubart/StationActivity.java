@@ -10,7 +10,7 @@ public class StationActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
 	
-	    // TODO Auto-generated method stub
+	    //station = (TextView)findViewById(R.id.station_list);
 	}
 
 }
