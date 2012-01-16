@@ -29,8 +29,8 @@ public class BartETDHandler extends DefaultHandler {
 			content += buffer.toString();
 			content += "\n";
 		} else if (localName.equals("name")) {
-			content += buffer.toString();
-			content += "\n";
+			//content += buffer.toString();
+			//content += "\n";
 		} else if (localName.equals("destination")) {
 			content += buffer.toString();
 			content += ": ";

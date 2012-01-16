@@ -13,6 +13,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.View;
@@ -54,8 +55,15 @@ public class MrubartActivity extends ListActivity {
 				String[] codes = res.getStringArray(R.array.station_codes);
 				String content = parseResponse(codes[position]);
 				
-				Toast.makeText(getApplicationContext(),
-					content, Toast.LENGTH_LONG).show();
+				AlertDialog alertDialog = new AlertDialog.Builder(MrubartActivity.this).create();
+				
+				alertDialog.setTitle(((TextView) view).getText());
+				alertDialog.setMessage(content);
+				alertDialog.setButton("Darn, I missed it", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which) {}});
+				alertDialog.show();
+				
+//				Toast.makeText(getApplicationContext(),
+//					content, Toast.LENGTH_LONG).show();
 
 
 			}
