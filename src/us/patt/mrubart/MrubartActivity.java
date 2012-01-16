@@ -13,6 +13,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -37,8 +38,10 @@ public class MrubartActivity extends ListActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		Resources res = getResources();
+		String[] names = res.getStringArray(R.array.station_names);
 		setListAdapter(new ArrayAdapter<String>(this, R.layout.list_item,
-				STATION_NAMES));
+				names));
 
 		ListView lv = getListView();
 		lv.setTextFilterEnabled(true);
@@ -47,8 +50,9 @@ public class MrubartActivity extends ListActivity {
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
 				// When clicked, show a toast with the TextView text
-				
-				String content = parseResponse(STATIIONS[position]);
+				Resources res = getResources();
+				String[] codes = res.getStringArray(R.array.station_codes);
+				String content = parseResponse(codes[position]);
 				
 				Toast.makeText(getApplicationContext(),
 					content, Toast.LENGTH_LONG).show();
@@ -97,8 +101,4 @@ public class MrubartActivity extends ListActivity {
 		return content;
 	}
 	
-		
-
-	static final String[] STATIIONS = new String[] { "12TH", "16TH", "19TH", "24TH", "ASHB", "BALB", "BAYF", "CAST", "CIVC", "COLS", "COLM", "CONC", "DALY", "DBRK", "DUBL", "DELN", "PLZA", "EMBR", "FRMT", "FTVL", "GLEN", "HAYW", "LAFY", "LAKE", "MCAR", "MLBR", "MONT", "NBRK", "NCON", "ORIN", "PITT", "PHIL", "POWL", "RICH", "ROCK", "SBRN", "SFIA", "SANL", "SHAY", "SSAN", "UCTY", "WCRK", "WDUB", "WOAK"};
-	static final String [] STATION_NAMES = {"12th St. Oakland City Center", "16th St. Mission (SF)", "19th St. Oakland", "24th St. Mission (SF)", "Ashby (Berkeley)", "Balboa Park (SF)", "Bay Fair (San Leandro)", "Castro Valley", "Civic Center/UN Plaza (SF)", "Coliseum/Oakland Airport", "Colma", "Concord", "Daly City", "Downtown Berkeley", "Dublin/Pleasanton", "El Cerrito del Norte", "El Cerrito Plaza", "Embarcadero (SF)", "Fremont", "Fruitvale (Oakland)", "Glen Park (SF)", "Hayward", "Lafayette", "Lake Merritt (Oakland)", "MacArthur (Oakland)", "Millbrae", "Montgomery St. (SF)", "North Berkeley", "North Concord/Martinez", "Orinda", "Pittsburg/Bay Point", "Pleasant Hill/Contra Costa Centre", "Powell St. (SF)", "Richmond", "Rockridge (Oakland)", "San Bruno", "San Francisco Int'l Airport", "San Leandro", "South Hayward", "South San Francisco", "Union City", "Walnut Creek", "West Dublin/Pleasanton", "West Oakland"};
 }
