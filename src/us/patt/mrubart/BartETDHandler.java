@@ -22,6 +22,15 @@ public class BartETDHandler extends DefaultHandler {
 			throws SAXException {
 		if (localName.equals("etd")) {
 			content += "\n";
+		} else if (localName.equals("date")) {
+			content += buffer.toString();
+			content += " ";
+		} else if (localName.equals("time")) {
+			content += buffer.toString();
+			content += "\n";
+		} else if (localName.equals("name")) {
+			content += buffer.toString();
+			content += "\n";
 		} else if (localName.equals("destination")) {
 			content += buffer.toString();
 			content += ": ";
