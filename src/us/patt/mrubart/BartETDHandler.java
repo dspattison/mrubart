@@ -37,6 +37,10 @@ public class BartETDHandler extends DefaultHandler {
 		} else if (localName.equals("minutes")) {
 			content += buffer.toString();
 			content += ", ";
+		} else if (localName.equals("error")) {
+			content += "ERROR: ";
+			content += buffer.toString();
+			content += "\n";
 		}
 
 	}

@@ -48,20 +48,31 @@ public class MrubartActivity extends ListActivity {
 		lv.setTextFilterEnabled(true);
 
 		lv.setOnItemClickListener(new OnItemClickListener() {
-			public void onItemClick(AdapterView<?> parent, View view,
-					int position, long id) {
+			public void onItemClick(AdapterView<?> parent, final View view,
+					final int position, long id) {
+				final ProgressDialog loadingDialog = ProgressDialog.show(MrubartActivity.this, "", "Loading. Please wait...", true);
+				
 				// When clicked, show a toast with the TextView text
-				Resources res = getResources();
-				String[] codes = res.getStringArray(R.array.station_codes);
-				String content = parseResponse(codes[position]);
-				
-				AlertDialog alertDialog = new AlertDialog.Builder(MrubartActivity.this).create();
-				
-				alertDialog.setTitle(((TextView) view).getText());
-				alertDialog.setMessage(content);
-				alertDialog.setButton("Darn, I missed it", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which) {}});
-				alertDialog.show();
-				
+				new Thread(new Runnable() {
+			        public void run() {
+						Resources res = getResources();
+						String[] codes = res.getStringArray(R.array.station_codes);
+						final String content = parseResponse(codes[position]);
+						
+						view.post(new Runnable() {
+							public void run() {
+								loadingDialog.cancel();
+								AlertDialog alertDialog = new AlertDialog.Builder(MrubartActivity.this).create();
+								
+								alertDialog.setTitle(((TextView) view).getText());
+								alertDialog.setMessage(content);
+								alertDialog.setButton("Darn, I missed it", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which) {}});
+								alertDialog.show();
+								
+							}
+						});
+			        }
+				}).start();
 //				Toast.makeText(getApplicationContext(),
 //					content, Toast.LENGTH_LONG).show();
 
