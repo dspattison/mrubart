@@ -13,9 +13,15 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Resources;
+import android.location.Location;
+import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.os.Bundle;
+import android.os.Debug;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -34,10 +40,14 @@ import org.xml.sax.XMLReader;
 
 
 public class MrubartActivity extends ListActivity {
+	
+	private static final String TAG = "MrubartActivity";
+	
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		findClosetStation();
 
 		Resources res = getResources();
 		String[] names = res.getStringArray(R.array.station_names);
@@ -118,6 +128,17 @@ public class MrubartActivity extends ListActivity {
 		
 		
 		return content;
+	}
+	
+	private void findClosetStation()
+	{
+		LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE); 
+		Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+		double longitude = location.getLongitude();
+		double latitude = location.getLatitude();
+		
+		Log.v(TAG, "long="+ longitude + " lat=" + latitude);
+		
 	}
 	
 }
