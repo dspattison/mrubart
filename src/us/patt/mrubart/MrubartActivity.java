@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -38,21 +39,18 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
-
 public class MrubartActivity extends ListActivity {
-	
+
 	private static final String TAG = "MrubartActivity";
-	
+
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		findClosetStation();
-
+		
 		Resources res = getResources();
 		String[] names = res.getStringArray(R.array.station_names);
-		setListAdapter(new ArrayAdapter<String>(this, R.layout.list_item,
-				names));
+		setListAdapter(new ArrayAdapter<String>(this, R.layout.list_item, names));
 
 		ListView lv = getListView();
 		lv.setTextFilterEnabled(true);
@@ -60,85 +58,161 @@ public class MrubartActivity extends ListActivity {
 		lv.setOnItemClickListener(new OnItemClickListener() {
 			public void onItemClick(AdapterView<?> parent, final View view,
 					final int position, long id) {
-				final ProgressDialog loadingDialog = ProgressDialog.show(MrubartActivity.this, "", "Loading. Please wait...", true);
+				String[] codes = getResources().getStringArray(R.array.station_codes);
+				showStation(view, codes[position]);
 				
-				// When clicked, show a toast with the TextView text
-				new Thread(new Runnable() {
-			        public void run() {
-						Resources res = getResources();
-						String[] codes = res.getStringArray(R.array.station_codes);
-						final String content = parseResponse(codes[position]);
-						
-						view.post(new Runnable() {
-							public void run() {
-								loadingDialog.cancel();
-								AlertDialog alertDialog = new AlertDialog.Builder(MrubartActivity.this).create();
-								
-								alertDialog.setTitle(((TextView) view).getText());
-								alertDialog.setMessage(content);
-								alertDialog.setButton("Darn, I missed it", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which) {}});
-								alertDialog.show();
-								
-							}
-						});
-			        }
-				}).start();
-//				Toast.makeText(getApplicationContext(),
-//					content, Toast.LENGTH_LONG).show();
-
 
 			}
 		});
 
-		// registerForContextMenu(getListView());
+		//load the best station!
+		findClosetStation();
 	}
-	
-	
+
 	/**
-	 * example: http://api.bart.gov/api/etd.aspx?cmd=etd&orig=NBRK&key=MW9S-E7SL-26DU-VV8V
+	 * example:
+	 * http://api.bart.gov/api/etd.aspx?cmd=etd&orig=NBRK&key=MW9S-E7SL-26DU-VV8V
 	 */
 	private String parseResponse(CharSequence station) {
-		String content="";
+		String content = "";
 
 		try {
-			URL url = new URL("http://api.bart.gov/api/etd.aspx?cmd=etd&orig="+ station +"&key=MW9S-E7SL-26DU-VV8V");
+			URL url = new URL("http://api.bart.gov/api/etd.aspx?cmd=etd&orig="
+					+ station + "&key=MW9S-E7SL-26DU-VV8V");
+			
 			InputStream response = url.openStream();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(response));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(
+					response));
 			for (String line; (line = reader.readLine()) != null;) {
 				content += line;
 			}
-			
-	        SAXParserFactory factory = SAXParserFactory.newInstance();
-	        // create a parser
-	        SAXParser parser = factory.newSAXParser();
-	        // create the reader (scanner)
-	        XMLReader xmlreader = parser.getXMLReader();
-	        
-	        BartETDHandler etdHandler = new BartETDHandler();
-            xmlreader.setContentHandler(etdHandler);
 
-	        
-	        xmlreader.parse(new InputSource(new StringReader(content)));
-	        
-	        content = etdHandler.getContent();
-			
+			SAXParserFactory factory = SAXParserFactory.newInstance();
+			// create a parser
+			SAXParser parser = factory.newSAXParser();
+			// create the reader (scanner)
+			XMLReader xmlreader = parser.getXMLReader();
+
+			BartETDHandler etdHandler = new BartETDHandler();
+			xmlreader.setContentHandler(etdHandler);
+
+			xmlreader.parse(new InputSource(new StringReader(content)));
+
+			content = etdHandler.getContent();
+
 		} catch (Exception e) {
-			return "OOPS! " +e.getClass().toString() + ": " + e.getMessage();
+			e.printStackTrace();
+			return "OOPS! " + e.getClass().toString() + ": " + e.getMessage();
 		}
-		
-		
+
 		return content;
 	}
 	
-	private void findClosetStation()
-	{
-		LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE); 
+	/**
+	 * call from main ui thread
+	 * @param view
+	 * @param station
+	 */
+	private void showStation(final View view, final String station) {
+		Log.d(TAG, "Showing station "+ station);
+		
+		final ProgressDialog loadingDialog = ProgressDialog.show(
+				MrubartActivity.this, "", "Loading. Please wait...",
+				true);
+
+		// When clicked, show a toast with the TextView text
+		new Thread(new Runnable() {
+			public void run() {
+				final String content = parseResponse(station);
+
+				view.post(new Runnable() {
+					public void run() {
+						loadingDialog.cancel();
+						AlertDialog alertDialog = new AlertDialog.Builder(
+								MrubartActivity.this).create();
+
+						alertDialog.setTitle(station);
+						alertDialog.setMessage(content);
+						alertDialog.setButton("Darn, I missed it",
+								new DialogInterface.OnClickListener() {
+									public void onClick(
+											DialogInterface dialog,
+											int which) {
+									}
+								});
+						alertDialog.show();
+
+					}
+				});
+			}
+		}).start();
+		// Toast.makeText(getApplicationContext(),
+		// content, Toast.LENGTH_LONG).show();
+	}
+
+	private void findClosetStation() {
+		LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 		double longitude = location.getLongitude();
 		double latitude = location.getLatitude();
+
+		Log.v(TAG, "long=" + longitude + " lat=" + latitude);
+		ArrayList<BartStation> stations = null;
+
+		try {
+			SAXParserFactory factory = SAXParserFactory.newInstance();
+			// create a parser
+			SAXParser parser = factory.newSAXParser();
+			// create the reader (scanner)
+			XMLReader xmlreader = parser.getXMLReader();
+			BartStationHandler stationHandler = new BartStationHandler();
+			xmlreader.setContentHandler(stationHandler);
+
+			// get xml data
+			InputStream inputStream = getResources().openRawResource(R.raw.stations);
+			//String stationsXml = "";
+
+			xmlreader.parse(new InputSource(inputStream));
+
+			stations = stationHandler.getStations();
+		} catch (Exception e) {
+			Log.e(TAG, "Error loading the station list from xml:"
+					+ e.getClass().toString() + ": " + e.getMessage());
+			e.printStackTrace();
+		}
 		
-		Log.v(TAG, "long="+ longitude + " lat=" + latitude);
+		if (null == stations || stations.isEmpty()) {
+			Log.e(TAG, "Stations is empty");
+			return;
+		}
+		//lets start with this one
+		BartStation closetStation = stations.get(0);
 		
+		
+		for (int i=0; i < stations.size(); i++) {
+			if (distance(closetStation, latitude, longitude) > distance(stations.get(i), latitude, longitude)) {
+				//this one is closer!!
+				closetStation = stations.get(i);
+				Log.i(TAG, "closer: " + closetStation);
+			}
+		}
+		
+		Log.i(TAG, "showing: [" + closetStation.abbr + "]");
+		Log.i(TAG, "showing: "+closetStation.toString());
+		showStation(getListView(), closetStation.abbr);
+		
+
 	}
-	
+	/**
+	 * warning: don't go near the international date line or poles
+	 * 
+	 * @param BartStation station
+	 * @param double latitude
+	 * @param double longitude
+	 * @return double
+	 */
+	private double distance(BartStation station, double latitude, double longitude) {
+		return Math.sqrt(Math.pow(station.gtfsLatitude - latitude, 2) + Math.pow(station.gtfsLongitude - longitude, 2));
+	}
+
 }
