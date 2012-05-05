@@ -80,13 +80,6 @@ public class MrubartActivity extends ListActivity {
 			URL url = new URL("http://api.bart.gov/api/etd.aspx?cmd=etd&orig="
 					+ station + "&key=MW9S-E7SL-26DU-VV8V");
 			
-			InputStream response = url.openStream();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					response));
-			for (String line; (line = reader.readLine()) != null;) {
-				content += line;
-			}
-
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 			// create a parser
 			SAXParser parser = factory.newSAXParser();
@@ -95,9 +88,9 @@ public class MrubartActivity extends ListActivity {
 
 			BartETDHandler etdHandler = new BartETDHandler();
 			xmlreader.setContentHandler(etdHandler);
-
-			xmlreader.parse(new InputSource(new StringReader(content)));
-
+			
+			xmlreader.parse(new InputSource(url.openConnection().getInputStream()));
+			
 			content = etdHandler.getContent();
 
 		} catch (Exception e) {
