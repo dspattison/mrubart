@@ -1,11 +1,15 @@
 package us.patt.mrubart;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -42,14 +46,46 @@ import org.xml.sax.XMLReader;
 public class MrubartActivity extends ListActivity {
 
 	private static final String TAG = "MrubartActivity";
+	
+	private ArrayList<BartStation> _stations;
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		Resources res = getResources();
-		String[] names = res.getStringArray(R.array.station_names);
+//		Resources res = getResources();
+//		String[] names = res.getStringArray(R.array.station_names);
+//		setListAdapter(new ArrayAdapter<String>(this, R.layout.list_item, names));
+		
+		ArrayList<BartStation> stations = getStations();
+		
+		if (null == stations || stations.isEmpty()) {
+			Log.e(TAG, "Stations is empty");
+			return;
+		}
+		
+		//sort stations by geo location
+		LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+		if (location != null) {
+			final double longitude = location.getLongitude();
+			final double latitude = location.getLatitude();
+			
+			Collections.sort(stations, new Comparator<BartStation>() {
+				public int compare(BartStation s1, BartStation s2) {
+					return distance(s1, latitude, longitude) < distance(s2, latitude, longitude) ? -1 : 1; 
+				}
+			});
+		}
+		
+		ArrayList<String> names = new ArrayList<String>();
+		
+		Iterator<BartStation> itr = stations.iterator();
+		while(itr.hasNext()) {
+			names.add(itr.next().name);
+		}
+		
 		setListAdapter(new ArrayAdapter<String>(this, R.layout.list_item, names));
 
 		ListView lv = getListView();
@@ -66,7 +102,7 @@ public class MrubartActivity extends ListActivity {
 		});
 
 		//load the best station!
-		findClosetStation();
+		//findClosetStation();
 	}
 
 	/**
@@ -150,29 +186,8 @@ public class MrubartActivity extends ListActivity {
 		double latitude = location.getLatitude();
 
 		Log.v(TAG, "long=" + longitude + " lat=" + latitude);
-		ArrayList<BartStation> stations = null;
-
-		try {
-			SAXParserFactory factory = SAXParserFactory.newInstance();
-			// create a parser
-			SAXParser parser = factory.newSAXParser();
-			// create the reader (scanner)
-			XMLReader xmlreader = parser.getXMLReader();
-			BartStationHandler stationHandler = new BartStationHandler();
-			xmlreader.setContentHandler(stationHandler);
-
-			// get xml data
-			InputStream inputStream = getResources().openRawResource(R.raw.stations);
-			//String stationsXml = "";
-
-			xmlreader.parse(new InputSource(inputStream));
-
-			stations = stationHandler.getStations();
-		} catch (Exception e) {
-			Log.e(TAG, "Error loading the station list from xml:"
-					+ e.getClass().toString() + ": " + e.getMessage());
-			e.printStackTrace();
-		}
+		
+		ArrayList<BartStation> stations = getStations();
 		
 		if (null == stations || stations.isEmpty()) {
 			Log.e(TAG, "Stations is empty");
@@ -206,6 +221,37 @@ public class MrubartActivity extends ListActivity {
 	 */
 	private double distance(BartStation station, double latitude, double longitude) {
 		return Math.sqrt(Math.pow(station.gtfsLatitude - latitude, 2) + Math.pow(station.gtfsLongitude - longitude, 2));
+	}
+	
+	private ArrayList<BartStation> getStations()
+	{
+		if (null != _stations) {
+			return _stations;
+		}
+		try {
+			SAXParserFactory factory = SAXParserFactory.newInstance();
+			// create a parser
+			SAXParser parser = factory.newSAXParser();
+			// create the reader (scanner)
+			XMLReader xmlreader = parser.getXMLReader();
+			BartStationHandler stationHandler = new BartStationHandler();
+			xmlreader.setContentHandler(stationHandler);
+
+			// get xml data
+			InputStream inputStream = getResources().openRawResource(R.raw.stations);
+			//String stationsXml = "";
+
+			xmlreader.parse(new InputSource(inputStream));
+
+			_stations = stationHandler.getStations();
+			return _stations;
+		} catch (Exception e) {
+			Log.e(TAG, "Error loading the station list from xml:"
+					+ e.getClass().toString() + ": " + e.getMessage());
+			e.printStackTrace();
+		}
+		return new ArrayList<BartStation>();
+		
 	}
 
 }

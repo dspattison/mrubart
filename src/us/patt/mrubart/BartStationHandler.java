@@ -29,23 +29,23 @@ public class BartStationHandler extends DefaultHandler {
 	public void endElement(String namespaceURI, String localName, String qName)
 			throws SAXException {
 		if (localName.equals("name")) {
-			currentStation.name = buffer.toString();
+			currentStation.name = buffer.toString().trim();
 		} else if (localName.equals("abbr")) {
-			currentStation.abbr = buffer.toString();
+			currentStation.abbr = buffer.toString().trim();
 		} else if (localName.equals("gtfs_latitude")) {
 			currentStation.gtfsLatitude = new Double(buffer.toString());
 		} else if (localName.equals("gtfs_longitude")) {
 			currentStation.gtfsLongitude = new Double(buffer.toString());
 		} else if (localName.equals("address")) {
-			currentStation.address = buffer.toString();
+			currentStation.address = buffer.toString().trim();
 		} else if (localName.equals("city")) {
-			currentStation.city = buffer.toString();
+			currentStation.city = buffer.toString().trim();
 		} else if (localName.equals("county")) {
-			currentStation.county = buffer.toString();
+			currentStation.county = buffer.toString().trim();
 		} else if (localName.equals("state")) {
-			currentStation.state = buffer.toString();
+			currentStation.state = buffer.toString().trim();
 		} else if (localName.equals("zipcode")) {
-			currentStation.zipcode = buffer.toString();
+			currentStation.zipcode = buffer.toString().trim();
 		} else if (localName.equals("station")) {
 			//end station element, place in array
 			stations.add(currentStation);
