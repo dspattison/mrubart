@@ -47,23 +47,14 @@ public class MrubartActivity extends ListActivity {
 
 	private static final String TAG = "MrubartActivity";
 	
-	private ArrayList<BartStation> _stations;
+	private ArrayList<BartStation> stations;
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
-//		Resources res = getResources();
-//		String[] names = res.getStringArray(R.array.station_names);
-//		setListAdapter(new ArrayAdapter<String>(this, R.layout.list_item, names));
-		
-		ArrayList<BartStation> stations = getStations();
-		
-		if (null == stations || stations.isEmpty()) {
-			Log.e(TAG, "Stations is empty");
-			return;
-		}
+		//load stations from disk
+		stations = getStations();
 		
 		//sort stations by geo location
 		LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -79,13 +70,13 @@ public class MrubartActivity extends ListActivity {
 			});
 		}
 		
+		//get an array of string names from the station list
 		ArrayList<String> names = new ArrayList<String>();
-		
-		Iterator<BartStation> itr = stations.iterator();
-		while(itr.hasNext()) {
+		for(Iterator<BartStation> itr = stations.iterator(); itr.hasNext() ;) {
 			names.add(itr.next().name);
 		}
 		
+		//set the list
 		setListAdapter(new ArrayAdapter<String>(this, R.layout.list_item, names));
 
 		ListView lv = getListView();
@@ -94,10 +85,7 @@ public class MrubartActivity extends ListActivity {
 		lv.setOnItemClickListener(new OnItemClickListener() {
 			public void onItemClick(AdapterView<?> parent, final View view,
 					final int position, long id) {
-				String[] codes = getResources().getStringArray(R.array.station_codes);
-				showStation(view, codes[position]);
-				
-
+				showStation(view, stations.get(position));
 			}
 		});
 
@@ -142,7 +130,7 @@ public class MrubartActivity extends ListActivity {
 	 * @param view
 	 * @param station
 	 */
-	private void showStation(final View view, final String station) {
+	private void showStation(final View view, final BartStation station) {
 		Log.d(TAG, "Showing station "+ station);
 		
 		final ProgressDialog loadingDialog = ProgressDialog.show(
@@ -152,7 +140,7 @@ public class MrubartActivity extends ListActivity {
 		// When clicked, show a toast with the TextView text
 		new Thread(new Runnable() {
 			public void run() {
-				final String content = parseResponse(station);
+				final String content = parseResponse(station.abbr);
 
 				view.post(new Runnable() {
 					public void run() {
@@ -160,7 +148,7 @@ public class MrubartActivity extends ListActivity {
 						AlertDialog alertDialog = new AlertDialog.Builder(
 								MrubartActivity.this).create();
 
-						alertDialog.setTitle(station);
+						alertDialog.setTitle(station.name);
 						alertDialog.setMessage(content);
 						alertDialog.setButton("Darn, I missed it",
 								new DialogInterface.OnClickListener() {
@@ -207,7 +195,7 @@ public class MrubartActivity extends ListActivity {
 		
 		Log.i(TAG, "showing: [" + closetStation.abbr + "]");
 		Log.i(TAG, "showing: "+closetStation.toString());
-		showStation(getListView(), closetStation.abbr);
+		showStation(getListView(), closetStation);
 		
 
 	}
@@ -225,9 +213,6 @@ public class MrubartActivity extends ListActivity {
 	
 	private ArrayList<BartStation> getStations()
 	{
-		if (null != _stations) {
-			return _stations;
-		}
 		try {
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 			// create a parser
@@ -243,8 +228,7 @@ public class MrubartActivity extends ListActivity {
 
 			xmlreader.parse(new InputSource(inputStream));
 
-			_stations = stationHandler.getStations();
-			return _stations;
+			return stationHandler.getStations();
 		} catch (Exception e) {
 			Log.e(TAG, "Error loading the station list from xml:"
 					+ e.getClass().toString() + ": " + e.getMessage());
